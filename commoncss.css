@@ -1,0 +1,9 @@
+.display {
+  position: absolute;
+  top: 35;
+  left: 35;
+}
+#completed {
+  font-size: 100px;
+  color: purple
+}
