@@ -185,10 +185,19 @@ function Render() {
 }
 
 function Load(level) {
-  if (level.length != 3) {alert("the code is invalid");return;}
+  var i1, i2, i3;
+  if (true) {
+    if (level.length != 3) {alert("the code is invalid");return;}
+    if (level[0].length != 2) {alert("the code is invalid");return;}
+    if (Number.isInteger(level[0][0]) == false || Number.isInteger(level[0][1]) == false) {alert("the code is invalid");return;}
+    if (level[1].length == 0) {alert("the code is invalid");return;}
+    for (i1=0; i1<level[1].length; i1++) {
+      if (Number.isInteger(level[1][i1][0]) == false || Number.isInteger(level[1][i1][1]) == false) {alert("the code is invalid");return;}
+      if (level[2][level[1][i1][0]][level[1][i1][1]][0] != 0) {alert("the code is invalid");return;}
+    }
+  }
   layout = copyArray(level[2]);
   objects = copyArray(level[2]);
-  var i1, i2, i3;
   for (i1=0; i1<objects.length; i1++) {
     for (i2=0; i2<objects[i1].length; i2++) {
       if (i1 == level[0][0] && i2 == level[0][1]) {objects[i1][i2] = 1;}
