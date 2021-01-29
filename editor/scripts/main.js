@@ -4,6 +4,13 @@ var type = [0,0];
 var SomethingSelected = false;
 var PlayerPresent = false;
 var BoxesNumber = 0;
+var Gametype = 2;
+
+function LoadThis() {
+  var string = document.getElementById("start").value
+  if (isJson(string) == false) {alert("the code is invalid");return;}
+  Load(JSON.parse(string));
+}
 
 function Clicked(element) {
   if (SomethingSelected == false) {return;}
@@ -61,12 +68,12 @@ function Selected(element, typethis, sectionthis) {
   var cells = document.getElementsByClassName("selector");
   if (element.style.borderColor == "rgb(255, 0, 0)") {
     SomethingSelected = false;
-    element.style.borderColor = "#FFFFFF";
+    element.style.borderColor = "#CC88FF";
   }
   else {
     SomethingSelected = true;
     for (var i=0; i<cells.length; i++) {
-      cells[i].style.borderColor = "#FFFFFF";
+      cells[i].style.borderColor = "#CC88FF";
     }
     element.style.borderColor = "#FF0000";
     type = typethis;

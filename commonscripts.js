@@ -185,6 +185,7 @@ function Render() {
 }
 
 function Load(level) {
+  if (level.length != 3) {alert("the code is invalid");return;}
   layout = copyArray(level[2]);
   objects = copyArray(level[2]);
   var i1, i2, i3;
@@ -197,8 +198,11 @@ function Load(level) {
       if (objects[i1][i2] != 1 && objects[i1][i2] != 2) {objects[i1][i2] = 0;}
     }
   }
-  document.getElementById("completed").innerHTML = "";
-  RemainingBoxes = level[1].length;
+  if (Gametype != 2) {
+    document.getElementById("completed").innerHTML = "";
+    RemainingBoxes = level[1].length;
+    GameRunning = true;
+  }
   ChangedLayout = true;
   Render();
 }
