@@ -30,6 +30,8 @@ objects=
 
 var layout = [];
 var objects = [];
+var lastLevel = null;
+var test = null;
 
 
 function Finish() {
@@ -185,10 +187,30 @@ function Render() {
 }
 
 function Load(level) {
-  if (level.length != 3) {alert("the code is invalid");return;}
+  var i1, i2, i3;
+  if (JSON.stringify(lastLevel) != JSON.stringify(level)) {
+    console.log("Checking if the code is valid");
+    //tre array presenti
+    if (level.length != 3) {alert("the code is invalid");return;}
+    //due player cordinate presenti
+    if (level[0].length != 2) {alert("the code is invalid");return;}
+    //player cordinates are number
+    if (Number.isInteger(level[0][0]) == false || Number.isInteger(level[0][1]) == false) {alert("the code is invalid");return;}
+    //controllo che la casella occupata dal player sia un path
+    if (level[2][level[0][0]][level[0][1]][0] != 0) {alert("the code is invalid");return;}
+    //ci sono scatole
+    if (level[1].length == 0) {alert("the code is invalid");return;}
+    //ciclo sulla scatole
+    for (i1=0; i1<level[1].length; i1++) {
+      //le cordinate della scatola sono numeri
+      if (Number.isInteger(level[1][i1][0]) == false || Number.isInteger(level[1][i1][1]) == false) {alert("the code is invalid");return;}
+      //controllo che la casella occupata dalla scatola sia un path
+      if (level[2][level[1][i1][0]][level[1][i1][1]][0] != 0) {alert("the code is invalid");return;}
+    }
+    lastLevel = copyArray(level);
+  }
   layout = copyArray(level[2]);
   objects = copyArray(level[2]);
-  var i1, i2, i3;
   for (i1=0; i1<objects.length; i1++) {
     for (i2=0; i2<objects[i1].length; i2++) {
       if (i1 == level[0][0] && i2 == level[0][1]) {objects[i1][i2] = 1;}
