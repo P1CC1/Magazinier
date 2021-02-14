@@ -33,6 +33,35 @@ var objects = [];
 var lastLevel = null;
 var test = null;
 
+function CreateTables () {
+  var prefix = "l";
+  var i1, i2, i3, id;
+  for (i1=0; i1<2; i1++) {
+    var table = document.createElement("table");
+    table.className = "display";
+    for (i2=0; i2<29; i2++) {
+      var tr = document.createElement("tr");
+      for (i3=0; i3<29; i3++) {
+        var td = document.createElement("td");
+        var img = document.createElement("img");
+        img.src = "../assets/textures/transparent.png";
+        img.width = "32";
+        img.height = "32";
+        if (i2.toString().length == 1) {id2 = "0"+i2;}
+        else {id2 = i2;}
+        if (i3.toString().length == 1) {id3 = "0"+i3;}
+        else {id3 = i3;}
+        id = prefix+"+"+id2+"+"+id3;
+        img.id = id;
+        td.appendChild(img);
+        tr.appendChild(td);
+      }
+      table.appendChild(tr);
+    }
+    document.body.insertBefore(table, document.getElementById("completed"));
+    prefix = "o";
+  }
+}
 
 function Finish() {
   GameRunning = false;

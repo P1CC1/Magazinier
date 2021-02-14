@@ -1,7 +1,11 @@
 .display {
+  border-spacing: 0px;
   position: absolute;
   top: 35;
   left: 35;
+}
+.display tr td{
+  padding: 0px;
 }
 #completed {
   font-size: 100px;
