@@ -32,13 +32,17 @@ var layout = [];
 var objects = [];
 var lastLevel = null;
 var test = null;
+var ChangedLayout = true;
+var GameRunning = false;
+var RemainingBoxes;
 
 function CreateTables () {
   var prefix = "l";
   var i1, i2, i3, id;
   for (i1=0; i1<2; i1++) {
     var table = document.createElement("table");
-    table.className = "display";
+    table.classList.add("display");
+    if (Gametype == 2) {table.classList.add("display_editor");}
     for (i2=0; i2<29; i2++) {
       var tr = document.createElement("tr");
       for (i3=0; i3<29; i3++) {
@@ -53,6 +57,7 @@ function CreateTables () {
         else {id3 = i3;}
         id = prefix+"+"+id2+"+"+id3;
         img.id = id;
+        if (Gametype == 2 && prefix == "o") {img.onclick = function() {Clicked(this)};}
         td.appendChild(img);
         tr.appendChild(td);
       }
@@ -63,15 +68,6 @@ function CreateTables () {
   }
 }
 
-function Finish() {
-  GameRunning = false;
-  document.getElementById("completed").innerHTML = "Completed!!"
-  if (Gametype == 0) {
-    document.getElementById("main").innerHTML = "Next";
-  }
-}
-
-var RemainingBoxes;
 function Move(multy, multx) {
   var position = SearchPosition(1);
   var y = position[0];
@@ -122,47 +118,6 @@ function Move(multy, multx) {
   Render();
 }
 
-function SearchPosition(id) {
-  var i1, i2;
-  Loop:
-  for (i1=0; i1<objects.length; i1++) {
-    for (i2=0; i2<objects[i1].length; i2++) {
-      if (objects[i1][i2] == id) {
-        break Loop;
-      }
-    }
-  }
-  return([i1,i2]);
-}
-
-function copyArray(item) {
-  if (Array.isArray(item)) {
-    return item.map(element => copyArray(element))
-  }
-  else {
-    return item
-  }
-}
-
-var GameRunning = false;
-document.addEventListener('keypress', event => {
-  if (GameRunning == true) {
-    if (event.keyCode == 119) {
-      Move(-1,0);
-    }
-    if (event.keyCode == 97) {
-      Move(0,-1);
-    }
-    if (event.keyCode == 115) {
-      Move(+1,0);
-    }
-    if (event.keyCode == 100) {
-      Move(0,+1);
-    }
-  }
-})
-
-var ChangedLayout = true;
 function Render() {
   var i1, i2;
   if (ChangedLayout) {
@@ -265,4 +220,53 @@ function isJson(str) {
         return false;
     }
     return true;
+}
+
+function SearchPosition(id) {
+  var i1, i2;
+  Loop:
+  for (i1=0; i1<objects.length; i1++) {
+    for (i2=0; i2<objects[i1].length; i2++) {
+      if (objects[i1][i2] == id) {
+        break Loop;
+      }
+    }
+  }
+  return([i1,i2]);
+}
+
+function copyArray(item) {
+  if (Array.isArray(item)) {
+    return item.map(element => copyArray(element))
+  }
+  else {
+    return item
+  }
+}
+
+
+document.addEventListener('keypress', event => {
+  if (GameRunning == true) {
+    if (event.keyCode == 119) {
+      Move(-1,0);
+    }
+    if (event.keyCode == 97) {
+      Move(0,-1);
+    }
+    if (event.keyCode == 115) {
+      Move(+1,0);
+    }
+    if (event.keyCode == 100) {
+      Move(0,+1);
+    }
+  }
+})
+
+
+function Finish() {
+  GameRunning = false;
+  document.getElementById("completed").innerHTML = "Completed!!"
+  if (Gametype == 0) {
+    document.getElementById("main").innerHTML = "Next";
+  }
 }

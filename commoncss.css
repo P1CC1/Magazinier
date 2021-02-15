@@ -4,8 +4,12 @@
   top: 35;
   left: 35;
 }
-.display tr td{
+.display tr td {
   padding: 0px;
+}
+.display_editor tr td {
+  border-style: solid;
+  border-width: thin;
 }
 #completed {
   font-size: 100px;
