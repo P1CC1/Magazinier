@@ -354,7 +354,7 @@ function Load(level) {
       objects[i1][i2] = {...object};
     }
   }
-  //fix layout_goal
+  //fix layout
   for (i1=0; i1<layout.length; i1++) {
     for (i2=0; i2<layout[i1].length; i2++) {
       if (layout[i1][i2].hasOwnProperty("loadFix")) {layout[i1][i2].loadFix(i1, i2);}
