@@ -1,7 +1,7 @@
 var CurrentLevel = 0;
 var Gametype = 0;
 
-function Main() {
+function MainThis() {
   var button = document.getElementById("main");
   if (button.innerHTML == "Start" || button.innerHTML == "Next") {
     CurrentLevel++;
@@ -10,4 +10,3 @@ function Main() {
   }
   Load(Levels[CurrentLevel]);
 }
-//ciao
