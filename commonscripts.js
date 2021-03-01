@@ -35,7 +35,36 @@ var layout_goal = {
   },
   texturepath:function(){return"../assets/textures/layout_goal/infinity.png"}
 };
-const layout_cells = [layout_wall,layout_path,layout_goal];
+var layout_oneway = {
+  id:"layout_oneway",directiony:-1,directionx:0,texture:undefined,actOn:"objects_player",
+  onStepping:function(object){
+    if (objects[object.y+object.deltay][object.x+object.deltax].id==this.actOn) {
+      if (object.directiony==this.directiony&&object.directionx==this.directionx) {return({});}
+      else {return({endPoints:null});}
+    }
+    else {return({});}
+  },
+  texturepath:function(){
+    if (this.texture == undefined) {this.determineTexturepath();}
+    return("../assets/textures/"+this.id+"/"+this.texture+".png");
+  },
+  determineTexturepath:function(){
+    if (this.directiony == 0) {
+      if (this.directionx == 1) {this.texture="right";}
+      else if (this.directionx == -1) {this.texture="left";}
+    }
+    else if (this.directiony == -1) {this.texture="up";}
+    else if (this.directiony == 1) {this.texture="down";}
+  },
+  setup:function(y,x){
+    var data = layout[y][x];
+    if(data[1] != undefined){this.directiony=data[1]}
+    if(data[2] != undefined){this.directionx=data[2]}
+    if(data[3] != undefined){this.actOn=objects_cells[data[3]].id}
+    delete this.setup;
+  }
+}
+const layout_cells = [layout_wall,layout_path,layout_goal,layout_oneway];
 
 var objects_void = {id:"objects_void",texturepath:function(){return("../assets/textures/transparent.png");},onStepping:function(object){
   return({endPoints:[[object.y,object.x,object.deltay,object.deltax]],continua:false});
@@ -143,7 +172,6 @@ const objects_cells = [objects_void,objects_player,objects_box];
 
 var layout = [];
 var objects = [];
-var lastLevel = null;
 var ChangedLayout = true;
 var GameRunning = false;
 var RemainingBoxes;
@@ -401,13 +429,11 @@ function copyArray(item) {
   }
 }
 
-
 document.addEventListener('keypress', event => {
   if (GameRunning == true) {
     Main(event.keyCode);
   }
 })
-
 
 function Finish() {
   GameRunning = false;
