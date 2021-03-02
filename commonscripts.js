@@ -1,3 +1,9 @@
+var layout_void = {
+  id:"layout_void",onStepping:function(object){
+    return({endPoints:null});
+  },
+  texturepath:function(){return("../assets/textures/transparent.png");},
+};
 var layout_wall = {
   id:"layout_wall",onStepping:function(object){
     return({endPoints:null,continua:false});
@@ -23,15 +29,18 @@ var layout_path = {
 var layout_goal = {
   id:"layout_goal",
   onStepping:function(object) {
-    if (objects[object.y+((Math.abs(object.deltay)-1)*object.directiony)][object.x+((Math.abs(object.deltax)-1)*object.directionx)].id == "objects_player") {
-      return ({endPoints:null,continua:false});
-    }
-    else if (objects[object.y+((Math.abs(object.deltay)-1)*object.directiony)][object.x+((Math.abs(object.deltax)-1)*object.directionx)].id == "objects_box") {
+    var previousObjectsCell = objects[object.y+((Math.abs(object.deltay)-1)*object.directiony)][object.x+((Math.abs(object.deltax)-1)*object.directionx)];
+    if (previousObjectsCell.id == "objects_box" && previousObjectsCell.texture == "default") {
       return({endPoints:[[object.y,object.x,object.deltay,object.deltax]],continua:false});
     }
+    return({endPoints:null,continua:false});
   },
-  afterStep:function(object) {
-
+  afterMove:function(y,x) {
+    if (objects[y][x].id == "objects_box") {
+      remainingBoxes--;
+      objects[y][x] = {...objects_void};
+      if (remainingBoxes == 0) {Finish();}
+    }
   },
   texturepath:function(){return"../assets/textures/layout_goal/infinity.png"}
 };
@@ -63,8 +72,8 @@ var layout_oneway = {
     if(data[3] != undefined){this.actOn=objects_cells[data[3]].id}
     delete this.setup;
   }
-}
-const layout_cells = [layout_wall,layout_path,layout_goal,layout_oneway];
+};
+const layout_cells = [layout_void,layout_wall,layout_path,layout_goal,layout_oneway];
 
 var objects_void = {id:"objects_void",texturepath:function(){return("../assets/textures/transparent.png");},onStepping:function(object){
   return({endPoints:[[object.y,object.x,object.deltay,object.deltax]],continua:false});
@@ -172,9 +181,9 @@ const objects_cells = [objects_void,objects_player,objects_box];
 
 var layout = [];
 var objects = [];
-var ChangedLayout = true;
-var GameRunning = false;
-var RemainingBoxes;
+var changedLayout = true;
+var gameRunning = false;
+var remainingBoxes;
 var moveNumber = 0;
 
 function CreateTables () {
@@ -263,20 +272,36 @@ function Move(directiony, directionx) {
           else if (Math.abs(endPoints[i1][2]) < Math.abs(endPoints[i2][2])) {endPoints.splice(i1, 1);}
           else if (Math.abs(endPoints[i1][3]) > Math.abs(endPoints[i2][3])) {endPoints.splice(i2, 1);}
           else if (Math.abs(endPoints[i1][3]) < Math.abs(endPoints[i2][3])) {endPoints.splice(i1, 1);}
+          else if (endPoints[i1][2]==endPoints[i2][2]||endPoints[i1][3]==endPoints[i2][3]) {endPoints.splice(i2, 1);}
         }
       }
     }
     //moving
+    var afterMoveCells = [];
     for (i1=0; i1<endPoints.length; i1++) {
       for (i2=endPoints[i1][2]; i2!=0; i2=((Math.abs(i2)-1)*directiony)) {
+        //move
         objects[ endPoints[i1][0]+i2 ][ endPoints[i1][1] ] = {...objects[ endPoints[i1][0]+((Math.abs(i2)-1)*directiony) ][ endPoints[i1][1] ]}
+        //salvo after move
+        if (objects[ endPoints[i1][0]+i2 ][ endPoints[i1][1] ].hasOwnProperty("afterMove")) {afterMoveCells.push([endPoints[i1][0]+i2,endPoints[i1][1]])}
+        if (layout[ endPoints[i1][0]+i2 ][ endPoints[i1][1] ].hasOwnProperty("afterMove")) {afterMoveCells.push([endPoints[i1][0]+i2,endPoints[i1][1]])}
       }
       for (i2=endPoints[i1][3]; i2!=0; i2=((Math.abs(i2)-1)*directionx)) {
+        //move
         objects[ endPoints[i1][0] ][ endPoints[i1][1]+i2 ] = {...objects[ endPoints[i1][0] ][ endPoints[i1][1]+((Math.abs(i2)-1)*directionx) ]}
+        //salvo after move
+        if (objects[ endPoints[i1][0] ][ endPoints[i1][1]+i2 ].hasOwnProperty("afterMove")) {afterMoveCells.push([endPoints[i1][0],endPoints[i1][1]+i2])}
+        if (layout[ endPoints[i1][0] ][ endPoints[i1][1]+i2 ].hasOwnProperty("afterMove")) {afterMoveCells.push([endPoints[i1][0],endPoints[i1][1]+i2])}
       }
       objects[endPoints[i1][0]][endPoints[i1][1]] = {...objects_void};
     }
     //after move
+    for (i1=0; i1<afterMoveCells.length; i1++) {
+      var currenty = afterMoveCells[i1][0];
+      var currentx = afterMoveCells[i1][1];
+      if (layout[currenty][currentx].hasOwnProperty("afterMove")) {layout[currenty][currentx].afterMove(currenty,currentx)}
+      if (objects[currenty][currentx].hasOwnProperty("afterMove")) {objects[currenty][currentx].afterMove(currenty,currentx)}
+    }
   }
   if (doneSomething) {Render();}
   return(doneSomething);
@@ -330,7 +355,7 @@ function endPointsHandlerForMovement(base, toAdd) {
 
 function Render() {
   var i1, i2, id1, id2;
-  if (ChangedLayout == true) {
+  if (changedLayout == true) {
     for (i1=0; i1<layout.length; i1++) {
       for (i2=0; i2<layout[i1].length; i2++) {
         if (i1.toString().length == 1) {id1 = "0"+i1;}
@@ -342,7 +367,7 @@ function Render() {
         if (cell.src != texturepath) {cell.src = texturepath;}
       }
     }
-    ChangedLayout = false
+    changedLayout = false
   }
   for (i1=0; i1<objects.length; i1++) {
     for (i2=0; i2<objects[i1].length; i2++) {
@@ -358,13 +383,14 @@ function Render() {
 }
 
 function Load(level) {
+  ClearDisplay();
   var i1, i2, i3;
   layout = copyArray(level[2]);
   objects = copyArray(level[3]);
   if (Gametype != 2) {
     document.getElementById("completed").innerHTML = "";
-    RemainingBoxes = level[0][0];
-    GameRunning = true;
+    remainingBoxes = level[0].remainingBoxes;
+    gameRunning = true;
   }
   //layout
   for (i1=0; i1<layout.length; i1++) {
@@ -394,7 +420,7 @@ function Load(level) {
       if (objects[i1][i2].hasOwnProperty("loadFix")) {objects[i1][i2].loadFix(i1, i2);}
     }
   }
-  ChangedLayout = true;
+  changedLayout = true;
   Render();
 }
 
@@ -430,13 +456,13 @@ function copyArray(item) {
 }
 
 document.addEventListener('keypress', event => {
-  if (GameRunning == true) {
+  if (gameRunning == true) {
     Main(event.keyCode);
   }
 })
 
 function Finish() {
-  GameRunning = false;
+  gameRunning = false;
   document.getElementById("completed").innerHTML = "Completed!!"
   if (Gametype == 0) {
     document.getElementById("main").innerHTML = "Next";
@@ -465,5 +491,22 @@ function SwithCardinalVectorial (input) {
   }
   else if (input[0] == -1) {
     return("n");
+  }
+}
+
+function ClearDisplay () {
+  console.log("Clearing the Display, Expect some lag")
+  var i1, i2, id1, id2;
+  for (i1=0; i1<29; i1++) {
+    for (i2=0; i2<29; i2++) {
+      if (i1.toString().length == 1) {id1 = "0"+i1;}
+      else {id1 = i1;}
+      if (i2.toString().length == 1) {id2 = "0"+i2;}
+      else {id2 = i2;}
+      var cellLayout = document.getElementById("l+"+id1+"+"+id2);
+      var cellObjects = document.getElementById("o+"+id1+"+"+id2);
+      cellLayout.src = "../assets/textures/transparent.png";
+      cellObjects.src = "../assets/textures/transparent.png";
+    }
   }
 }
