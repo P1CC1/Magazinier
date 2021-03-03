@@ -1,3 +1,12 @@
+var layout = [];
+var objects = [];
+var gameState = {
+  changedLayout:true,
+  gameRunning:false,
+  remainingBoxes:undefined,
+  moveNumber:0
+}
+
 var layout_void = {
   id:"layout_void",onStepping:function(object){
     return({endPoints:null});
@@ -37,9 +46,9 @@ var layout_goal = {
   },
   afterMove:function(y,x) {
     if (objects[y][x].id == "objects_box") {
-      remainingBoxes--;
+      gameState.remainingBoxes--;
       objects[y][x] = {...objects_void};
-      if (remainingBoxes == 0) {Finish();}
+      if (gameState.remainingBoxes == 0) {Finish();}
     }
   },
   texturepath:function(){return"../assets/textures/layout_goal/infinity.png"}
@@ -137,7 +146,7 @@ var objects_box = {
     delete this.setup;
   },
   onStepping:function(object){
-    this.lastChecked = moveNumber;
+    this.lastChecked = gameState.moveNumber;
     var result = {continua:true,endPoints:[]};
     var sides = [];
     if (object.directiony == 0) {
@@ -158,7 +167,7 @@ var objects_box = {
       var antiCardinal = SwithCardinalVectorial ([antiDirectiony,antiDirectionx]);
       while (true) {
         var currentCell = objects[starty+deltay][startx+deltax];
-        if (currentCell.lastChecked == moveNumber) {break;}
+        if (currentCell.lastChecked == gameState.moveNumber) {break;}
         if (currentCell[antiCardinal] != 1) {
           var endPoints = CheckMovement(starty+deltay, startx+deltax, object.directiony, object.directionx);
           result.endPoints = endPointsHandlerForMovement(result.endPoints, endPoints);
@@ -178,13 +187,6 @@ var objects_box = {
   }
 };
 const objects_cells = [objects_void,objects_player,objects_box];
-
-var layout = [];
-var objects = [];
-var changedLayout = true;
-var gameRunning = false;
-var remainingBoxes;
-var moveNumber = 0;
 
 function CreateTables () {
   var prefix = "l";
@@ -246,7 +248,7 @@ function Main(key) {
 }
 
 function Move(directiony, directionx) {
-  moveNumber++;
+  gameState.moveNumber++;
   var playersPosition = SearchPositionByID(objects, "objects_player")
   var y = playersPosition[0][0];
   var x = playersPosition[0][1];
@@ -355,7 +357,7 @@ function endPointsHandlerForMovement(base, toAdd) {
 
 function Render() {
   var i1, i2, id1, id2;
-  if (changedLayout == true) {
+  if (gameState.changedLayout == true) {
     for (i1=0; i1<layout.length; i1++) {
       for (i2=0; i2<layout[i1].length; i2++) {
         if (i1.toString().length == 1) {id1 = "0"+i1;}
@@ -367,7 +369,7 @@ function Render() {
         if (cell.src != texturepath) {cell.src = texturepath;}
       }
     }
-    changedLayout = false
+    gameState.changedLayout = false
   }
   for (i1=0; i1<objects.length; i1++) {
     for (i2=0; i2<objects[i1].length; i2++) {
@@ -383,14 +385,14 @@ function Render() {
 }
 
 function Load(level) {
-  ClearDisplay();
+  DeleteGame();
   var i1, i2, i3;
   layout = copyArray(level[2]);
   objects = copyArray(level[3]);
   if (Gametype != 2) {
     document.getElementById("completed").innerHTML = "";
-    remainingBoxes = level[0].remainingBoxes;
-    gameRunning = true;
+    gameState.remainingBoxes = level[0].remainingBoxes;
+    gameState.gameRunning = true;
   }
   //layout
   for (i1=0; i1<layout.length; i1++) {
@@ -420,7 +422,7 @@ function Load(level) {
       if (objects[i1][i2].hasOwnProperty("loadFix")) {objects[i1][i2].loadFix(i1, i2);}
     }
   }
-  changedLayout = true;
+  gameState.changedLayout = true;
   Render();
 }
 
@@ -456,13 +458,13 @@ function copyArray(item) {
 }
 
 document.addEventListener('keypress', event => {
-  if (gameRunning == true) {
+  if (gameState.gameRunning == true) {
     Main(event.keyCode);
   }
 })
 
 function Finish() {
-  gameRunning = false;
+  gameState.gameRunning = false;
   document.getElementById("completed").innerHTML = "Completed!!"
   if (Gametype == 0) {
     document.getElementById("main").innerHTML = "Next";
@@ -509,4 +511,20 @@ function ClearDisplay () {
       cellObjects.src = "../assets/textures/transparent.png";
     }
   }
+}
+
+function ResetGameState () {
+  gameState = {
+    changedLayout:true,
+    gameRunning:false,
+    remainingBoxes:undefined,
+    moveNumber:0
+  };
+}
+
+function DeleteGame () {
+  ResetGameState();
+  ClearDisplay();
+  layout = [];
+  objects = [];
 }
