@@ -1,11 +1,14 @@
 var layout = [];
 var objects = [];
-var gameState = {
+var defaultGameState = {
   changedLayout:true,
   gameRunning:false,
   remainingBoxes:undefined,
-  moveNumber:0
+  moveNumber:0,
+  playerNumber:undefined,
+  playerTurn:0,
 }
+var gameState = {...defaultGameState}
 
 var layout_void = {
   id:"layout_void",onStepping:function(object){
@@ -89,6 +92,7 @@ var objects_void = {id:"objects_void",texturepath:function(){return("../assets/t
 }};
 var objects_player = {
   id:"objects_player",
+  playerId:undefined,
   facingy:-1,facingx:0,
   texturepath:function(){
     var facing = "up";
@@ -102,6 +106,11 @@ var objects_player = {
   },
   onStepping:function(object){
     return({continua:true});
+  },
+  setup:function(data, number){
+    this.playerId = number;
+    if (data.facingy != undefined) {this.facingy=data.facingy;}
+    if (data.facingx != undefined) {this.facingx=data.facingx;}
   }
 };
 var objects_box = {
@@ -220,38 +229,29 @@ function CreateTables () {
   }
 }
 
-function Main(key) {
-  var moving = false;
-  if (key == 119) { //w
-    moving = true;
-    var directiony = -1;
-    var directionx = 0;
+function Main(input) {
+  var doneSomething = false;
+  var playersPosition = SearchPositionByID(objects, "objects_player");
+  var i1;
+  for (i1=0; i1<playersPosition.length; i1++) {
+    var currentPlayerPosition = playersPosition[i1];
+    if (objects[currentPlayerPosition[0]][currentPlayerPosition[1]].playerId == gameState.playerTurn) {
+      var y = currentPlayerPosition[0];
+      var x = currentPlayerPosition[1];
+      break;
+    }
   }
-  else if (key == 97) { //a
-    moving = true;
-    var directiony = 0;
-    var directionx = -1;
+  if (input.action == "move") {
+    doneSomething = Move(y, x, input.directiony,input.directionx);
   }
-  else if (key == 115) { //s
-    moving = true;
-    var directiony = 1;
-    var directionx = 0;
-  }
-  else if (key == 100) { //d
-    moving = true;
-    var directiony = 0;
-    var directionx = 1;
-  }
-  if (moving == true) {
-    var hasMoved = Move(directiony, directionx)
-  }
+
+  if (doneSomething == false) {return;}
+  gameState.playerTurn++;
+  if (gameState.playerTurn >= gameState.playerNumber) {gameState.playerTurn = 0;}
 }
 
-function Move(directiony, directionx) {
+function Move(y, x, directiony, directionx) {
   gameState.moveNumber++;
-  var playersPosition = SearchPositionByID(objects, "objects_player")
-  var y = playersPosition[0][0];
-  var x = playersPosition[0][1];
   var doneSomething = false;
   //cambio la rotazione del player
   if (objects[y][x].facingy != directiony || objects[y][x].facingx != directionx)
@@ -386,14 +386,10 @@ function Render() {
 
 function Load(level) {
   DeleteGame();
+  gameState.changedLayout = true;
   var i1, i2, i3;
   layout = copyArray(level[2]);
   objects = copyArray(level[3]);
-  if (Gametype != 2) {
-    document.getElementById("completed").innerHTML = "";
-    gameState.remainingBoxes = level[0].remainingBoxes;
-    gameState.gameRunning = true;
-  }
   //layout
   for (i1=0; i1<layout.length; i1++) {
     for (i2=0; i2<layout[i1].length; i2++) {
@@ -422,7 +418,23 @@ function Load(level) {
       if (objects[i1][i2].hasOwnProperty("loadFix")) {objects[i1][i2].loadFix(i1, i2);}
     }
   }
-  gameState.changedLayout = true;
+  if (Gametype == 2) {
+    Render();
+    return;
+  }
+  document.getElementById("completed").innerHTML = "";
+  gameState.remainingBoxes = level[0].remainingBoxes;
+  gameState.gameRunning = true;
+  //players setup
+  var playersInfo = level[1];
+  gameState.playerNumber = playersInfo.length;
+  for (i1=0; i1<gameState.playerNumber; i1++) {
+    var currentPlayerInfo = playersInfo[i1];
+    var currenty = currentPlayerInfo.y;
+    var currentx = currentPlayerInfo.x;
+    objects[currenty][currentx] = {...objects_player};
+    objects[currenty][currentx].setup(currentPlayerInfo, i1);
+  }
   Render();
 }
 
@@ -458,9 +470,35 @@ function copyArray(item) {
 }
 
 document.addEventListener('keypress', event => {
-  if (gameState.gameRunning == true) {
-    Main(event.keyCode);
+  if (gameState.gameRunning == false) {return;}
+  key = event.keyCode;
+  var proceed = false;
+  var result = {};
+  if (key == 119) { //w
+    proceed = true;
+    result.action = "move";
+    result.directiony = -1;
+    result.directionx = 0;
   }
+  else if (key == 97) { //a
+    proceed = true;
+    result.action = "move";
+    result.directiony = 0;
+    result.directionx = -1;
+  }
+  else if (key == 115) { //s
+    proceed = true;
+    result.action = "move";
+    result.directiony = 1;
+    result.directionx = 0;
+  }
+  else if (key == 100) { //d
+    proceed = true;
+    result.action = "move";
+    result.directiony = 0;
+    result.directionx = 1;
+  }
+  if (proceed == true) {Main(result);}
 })
 
 function Finish() {
@@ -513,18 +551,9 @@ function ClearDisplay () {
   }
 }
 
-function ResetGameState () {
-  gameState = {
-    changedLayout:true,
-    gameRunning:false,
-    remainingBoxes:undefined,
-    moveNumber:0
-  };
-}
-
 function DeleteGame () {
-  ResetGameState();
   ClearDisplay();
+  gameState = {...defaultGameState};
   layout = [];
   objects = [];
 }
