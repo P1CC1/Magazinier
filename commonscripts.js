@@ -57,7 +57,7 @@ var goal_0 = {
       if (gameState.remainingBoxes == 0) {Finish();}
     }
   },
-  texturepath:function(){return"../assets/textures/layout_goal/infinity.png"}
+  texturepath:function(){return"../assets/textures/"+this.id+"/infinity.png"}
 };
 var oneway_0 = {
   id:"oneway_0",directiony:-1,directionx:0,texture:undefined,actOn:"level[1]_player",
@@ -154,10 +154,12 @@ var box_1 = {
     this.texture=file;
   },
   setup:function(data,y,x){
-    if (data[0]==1) {this.n=1;}
-    if (data[1]==1) {this.e=1;}
-    if (data[2]==1) {this.s=1;}
-    if (data[3]==1) {this.w=1;}
+    if (data != undefined) {
+      if (data[0]==1) {this.n=1;}
+      if (data[1]==1) {this.e=1;}
+      if (data[2]==1) {this.s=1;}
+      if (data[3]==1) {this.w=1;}
+    }
     delete this.setup;
   },
   onStepping:function(object){
@@ -195,6 +197,8 @@ var box_1 = {
     return(result);
   },
   fix:function (y,x) {
+    y = Number(y);
+    x = Number(x);
     if (this.n==1 && level[1][y-1][x].s!=1) {this.n=0;}
     if (this.e==1 && level[1][y][x+1].w!=1) {this.e=0;}
     if (this.s==1 && level[1][y+1][x].n!=1) {this.s=0;}
@@ -273,7 +277,7 @@ function Move(y, x, directiony, directionx) {
   //console.log(endPoints);
   if (endPoints != null) {
     doneSomething = true;
-    var i1, i2;
+    var i1, i2, eP, cell;
     //remove duplicates
     for (i1=0; i1<endPoints.length; i1++) {
       for (i2=0; i2<endPoints.length; i2++) {
@@ -287,30 +291,31 @@ function Move(y, x, directiony, directionx) {
       }
     }
     //moving
-    var afterMoveCells = [];
     for (i1=0; i1<endPoints.length; i1++) {
-      for (i2=endPoints[i1][2]; i2!=0; i2=((Math.abs(i2)-1)*directiony)) {
-        //move
-        level[1][ endPoints[i1][0]+i2 ][ endPoints[i1][1] ] = {...level[1][ endPoints[i1][0]+((Math.abs(i2)-1)*directiony) ][ endPoints[i1][1] ]}
-        //salvo after move
-        if (level[1][ endPoints[i1][0]+i2 ][ endPoints[i1][1] ].hasOwnProperty("afterMove")) {afterMoveCells.push([endPoints[i1][0]+i2,endPoints[i1][1]])}
-        if (level[0][ endPoints[i1][0]+i2 ][ endPoints[i1][1] ].hasOwnProperty("afterMove")) {afterMoveCells.push([endPoints[i1][0]+i2,endPoints[i1][1]])}
+      eP = endPoints[i1];
+      //ciclo all'indietro
+      for (i2=eP[2]; i2!=0; i2=VectorOperation(i2, -1, directiony)) {
+        level[1][eP[0]+i2][eP[1]] = {...level[1][eP[0]+VectorOperation(i2, -1, directiony)][eP[1]]}
       }
-      for (i2=endPoints[i1][3]; i2!=0; i2=((Math.abs(i2)-1)*directionx)) {
-        //move
-        level[1][ endPoints[i1][0] ][ endPoints[i1][1]+i2 ] = {...level[1][ endPoints[i1][0] ][ endPoints[i1][1]+((Math.abs(i2)-1)*directionx) ]}
-        //salvo after move
-        if (level[1][ endPoints[i1][0] ][ endPoints[i1][1]+i2 ].hasOwnProperty("afterMove")) {afterMoveCells.push([endPoints[i1][0],endPoints[i1][1]+i2])}
-        if (level[0][ endPoints[i1][0] ][ endPoints[i1][1]+i2 ].hasOwnProperty("afterMove")) {afterMoveCells.push([endPoints[i1][0],endPoints[i1][1]+i2])}
+      for (i2=eP[3]; i2!=0; i2=VectorOperation(i2, -1, directionx)) {
+        level[1][eP[0]][eP[1]+i2] = {...level[1][eP[0]][eP[1]+VectorOperation(i2, -1, directionx)]}
       }
-      level[1][endPoints[i1][0]][endPoints[i1][1]] = {...void_1};
+      InsertCell (1,eP[0],eP[1],0);
     }
     //after move
-    for (i1=0; i1<afterMoveCells.length; i1++) {
-      var currenty = afterMoveCells[i1][0];
-      var currentx = afterMoveCells[i1][1];
-      if (level[0][currenty][currentx].hasOwnProperty("afterMove")) {layout[currenty][currentx].afterMove(currenty,currentx)}
-      if (level[1][currenty][currentx].hasOwnProperty("afterMove")) {level[1][currenty][currentx].afterMove(currenty,currentx)}
+    for (i1=0; i1<endPoints.length; i1++) {
+      eP = endPoints[i1];
+      //ciclo all'indietro
+      for (i2=eP[2]; i2!=0; i2=VectorOperation(i2, -1, directiony)) {
+        cell = level[1][eP[0]+i2][eP[1]];
+        cell.render = true;
+        if (cell.hasOwnProperty("afterMove")) {cell.afterMove(eP[0]+i2,eP[1]);}
+      }
+      for (i2=eP[3]; i2!=0; i2=VectorOperation(i2, -1, directionx)) {
+        cell = level[1][eP[0]][eP[1]+i2];
+        cell.render = true;
+        if (cell.hasOwnProperty("afterMove")) {cell.afterMove(eP[0],eP[1]+i2);}
+      }
     }
   }
   if (doneSomething) {Render();}
@@ -326,14 +331,14 @@ function CheckMovement(y, x, directiony, directionx) {
   while (continua && endPoints != null) {
     currenty = y+deltay;
     currentx = x+deltax;
-    if (CellExist(0,currenty,currentx)==false||CellExist(1,currenty,currentx)==false) {return(null);}
+    if (!BothCellsExist(currenty,currentx)) {return(null);}
     continua = false;
     var object = {y:y, x:x, directiony:directiony, directionx:directionx, deltax:deltax, deltay:deltay};
     var newObject_0 = level[0][currenty][currentx].onStepping(object);
     var newObject_1 = level[1][currenty][currentx].onStepping(object);
     //sistemo continua
     continua = ContinuaHandlerForMovement(newObject_0.continua, newObject_1.continua);
-    //copy endPoints from layout
+    //copy endPoints from level[0]
     endPoints = endPointsHandlerForMovement(endPoints, newObject_0.endPoints);
     //copy endPoints from level[1]
     endPoints = endPointsHandlerForMovement(endPoints, newObject_1.endPoints);
@@ -363,43 +368,25 @@ function endPointsHandlerForMovement(base, toAdd) {
   return(base);
 }
 
-function TestRender() {
-  var i1, i2, id1, id2, cell, texturepath;
-  //layout
-  for (i1=0; i1<29; i1++) {
-    //se non c'è la riga fermo tutto
-    if (layout[i1] == undefined) {break;}
-    //ciclo sulla riga solo se contiene valori
-    if (layout[i1].length != 0) {
-      for (i2=0; i2<29; i2++) {
-        //se non c'è la cella fermo tutto
-        if (layout[i1][i2] == undefined) {break;}
-        //cambio texture
-        cell = document.getElementById(idHandlerForRender("l",i1,i2));
-        texturepath = layout[i1][i2].texturepath(i1,i2);
-        if (cell.src != texturepath) {cell.src = texturepath;}
-      }
-    }
-  }
-  //level[1]
-  for (i1=0; i1<29; i1++) {
-    //se non c'è la riga fermo tutto
-    if (level[1][i1] == undefined) {break;}
-    //ciclo sulla riga solo se contiene valori
-    if (level[1][i1].length != 0) {
-      for (i2=0; i2<29; i2++) {
-        //se non c'è la cella fermo tutto
-        if (level[1][i1][i2] == undefined) {break;}
-        //cambio texture
-        cell = document.getElementById(idHandlerForRender("o",i1,i2));
-        texturepath = level[1][i1][i2].texturepath(i1,i2);
-        if (cell.src != texturepath) {cell.src = texturepath;}
+function Render() {
+  var i1;
+  var cells = document.getElementsByClassName("cells");
+  for (i1=0; i1<cells.length; i1++) {
+    var displayCell = cells[i1];
+    var z = displayCell.dataset.z;
+    var y = displayCell.dataset.y;
+    var x = displayCell.dataset.x;
+    if (CellExist(z,y,x)) {
+      var cell = level[z][y][x];
+      if (cell.render) {
+        displayCell.src = cell.texturepath(y,x);
+        cell.render = false;
       }
     }
   }
 }
 
-function Render() {
+function OldRender() {
   var i1, i2, i3;
   for (i1=0; i1<level.length; i1++) {
     for (i2=0; i2<level[i1].length; i2++) {
@@ -426,7 +413,7 @@ function Load(input) {
   //general e player
   if (Gametype != 2) {
     document.getElementById("completed").innerHTML = "";
-    gameState.remainingBoxes = level[1].remainingBoxes;
+    gameState.remainingBoxes = input[1].remainingBoxes;
     gameState.gameRunning = true;
     //players setup
     var playersData = input[2];
@@ -566,6 +553,7 @@ function DeleteGame () {
 
 function InsertCell (z,y,x,numeralId,data) {
   level[z][y][x] = {...defaultCells[z][numeralId]};
+  level[z][y][x].render = true;
   if (level[z][y][x].hasOwnProperty("setup") && gameState.gameRunning == true) {level[z][y][x].setup(data,y,x);}
 }
 
@@ -574,4 +562,8 @@ function CellExist (z,y,x) {
   if (level[z][y]==undefined) {return(false);}
   if (level[z][y][x]==undefined) {return(false);}
   return(true);
+}
+
+function BothCellsExist (y,x) {
+  return(CellExist(0,y,x)&&CellExist(1,y,x));
 }
