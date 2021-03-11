@@ -277,49 +277,58 @@ function Move(y, x, directiony, directionx) {
   //console.log(endPoints);
   if (endPoints != null) {
     doneSomething = true;
-    var i1, i2, eP, cell;
+    var i, i1, i2, i3, eP, cell;
     //remove duplicates
-    for (i1=0; i1<endPoints.length; i1++) {
-      for (i2=0; i2<endPoints.length; i2++) {
-        if (i1 != i2 && endPoints[i1][0]+endPoints[i1][2] == endPoints[i2][0]+endPoints[i2][2] && endPoints[i1][1]+endPoints[i1][3] == endPoints[i2][1]+endPoints[i2][3]) {
-          if (Math.abs(endPoints[i1][2]) > Math.abs(endPoints[i2][2])) {endPoints.splice(i2, 1);}
-          else if (Math.abs(endPoints[i1][2]) < Math.abs(endPoints[i2][2])) {endPoints.splice(i1, 1);}
-          else if (Math.abs(endPoints[i1][3]) > Math.abs(endPoints[i2][3])) {endPoints.splice(i2, 1);}
-          else if (Math.abs(endPoints[i1][3]) < Math.abs(endPoints[i2][3])) {endPoints.splice(i1, 1);}
-          else if (endPoints[i1][2]==endPoints[i2][2]||endPoints[i1][3]==endPoints[i2][3]) {endPoints.splice(i2, 1);}
-        }
-      }
-    }
+    endPoints = RemoveEndPointsDuplicates (endPoints);
+
     //moving
     for (i1=0; i1<endPoints.length; i1++) {
       eP = endPoints[i1];
-      //ciclo all'indietro
-      for (i2=eP[2]; i2!=0; i2=VectorOperation(i2, -1, directiony)) {
-        level[1][eP[0]+i2][eP[1]] = {...level[1][eP[0]+VectorOperation(i2, -1, directiony)][eP[1]]}
-      }
-      for (i2=eP[3]; i2!=0; i2=VectorOperation(i2, -1, directionx)) {
-        level[1][eP[0]][eP[1]+i2] = {...level[1][eP[0]][eP[1]+VectorOperation(i2, -1, directionx)]}
+      i2 = eP[2];
+      i3 = eP[3];
+      while (i2!=0||i3!=0) {
+        level[1][eP[0]+i2][eP[1]+i3] = {...level[1][eP[0]+VectorOperation(i2, -1, directiony)][eP[1]+VectorOperation(i3, -1, directionx)]};
+        if (i2!=0) {i2=VectorOperation(i2, -1, directiony);}
+        if (i3!=0) {i3=VectorOperation(i3, -1, directionx);}
       }
       InsertCell (1,eP[0],eP[1],0);
     }
+
     //after move
-    for (i1=0; i1<endPoints.length; i1++) {
-      eP = endPoints[i1];
-      //ciclo all'indietro
-      for (i2=eP[2]; i2!=0; i2=VectorOperation(i2, -1, directiony)) {
-        cell = level[1][eP[0]+i2][eP[1]];
-        cell.render = true;
-        if (cell.hasOwnProperty("afterMove")) {cell.afterMove(eP[0]+i2,eP[1]);}
-      }
-      for (i2=eP[3]; i2!=0; i2=VectorOperation(i2, -1, directionx)) {
-        cell = level[1][eP[0]][eP[1]+i2];
-        cell.render = true;
-        if (cell.hasOwnProperty("afterMove")) {cell.afterMove(eP[0],eP[1]+i2);}
+    for (i=0; i<level.length; i++) {
+      for (i1=0; i1<endPoints.length; i1++) {
+        eP = endPoints[i1];
+        i2 = eP[2];
+        i3 = eP[3];
+        while (i2!=0||i3!=0) {
+          cell = level[i][eP[0]+i2][eP[1]+i3];
+          cell.render = true;
+          if (cell.hasOwnProperty("afterMove")) {cell.afterMove(eP[0]+i2,eP[1]+i3);}
+          if (i2!=0) {i2=VectorOperation(i2, -1, directiony);}
+          if (i3!=0) {i3=VectorOperation(i3, -1, directionx);}
+        }
       }
     }
+
   }
   if (doneSomething) {Render();}
   return(doneSomething);
+}
+
+function RemoveEndPointsDuplicates (endPoints) {
+  var i1, i2;
+  for (i1=0; i1<endPoints.length; i1++) {
+    for (i2=0; i2<endPoints.length; i2++) {
+      if (i1 != i2 && endPoints[i1][0]+endPoints[i1][2] == endPoints[i2][0]+endPoints[i2][2] && endPoints[i1][1]+endPoints[i1][3] == endPoints[i2][1]+endPoints[i2][3]) {
+        if (Math.abs(endPoints[i1][2]) > Math.abs(endPoints[i2][2])) {endPoints.splice(i2, 1);}
+        else if (Math.abs(endPoints[i1][2]) < Math.abs(endPoints[i2][2])) {endPoints.splice(i1, 1);}
+        else if (Math.abs(endPoints[i1][3]) > Math.abs(endPoints[i2][3])) {endPoints.splice(i2, 1);}
+        else if (Math.abs(endPoints[i1][3]) < Math.abs(endPoints[i2][3])) {endPoints.splice(i1, 1);}
+        else if (endPoints[i1][2]==endPoints[i2][2]||endPoints[i1][3]==endPoints[i2][3]) {endPoints.splice(i2, 1);}
+      }
+    }
+  }
+  return(endPoints);
 }
 
 function CheckMovement(y, x, directiony, directionx) {
