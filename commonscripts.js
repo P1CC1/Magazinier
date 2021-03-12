@@ -1,10 +1,10 @@
 var level = [[],[]];
 var defaultGameState = {
   gameRunning:false,
-  remainingBoxes:undefined,
   moveNumber:0,
-  playerNumber:undefined,
   playerTurn:0,
+  displaySize:function(){return(this.viewField*2+1);},
+  levelMaxSize:[0,0]
 };
 var gameState = {...defaultGameState};
 
@@ -212,17 +212,18 @@ const defaultCells = [
   [void_1,player_1,box_1]
 ];
 
-function CreateTables () {
+function CreateTables (size) {
   var i1, i2, i3;
   for (i1=0; i1<2; i1++) {
     var table = document.createElement("table");
     table.classList.add("display");
-    if (Gametype == 2) {table.classList.add("display_editor");}
-    for (i2=0; i2<29; i2++) {
+    table.classList.add("tables");
+    for (i2=0; i2<size; i2++) {
       var tr = document.createElement("tr");
-      for (i3=0; i3<29; i3++) {
+      for (i3=0; i3<size; i3++) {
         var td = document.createElement("td");
         var img = document.createElement("img");
+
         img.classList.add("cells");
         img.src = "../assets/textures/transparent.png";
         img.width = "32";
@@ -231,7 +232,7 @@ function CreateTables () {
         img.dataset.y = i2;
         img.dataset.x = i3;
         img.dataset.z = i1;
-        if (Gametype == 2 && prefix == "o") {img.onclick = function() {Clicked(this)};}
+
         td.appendChild(img);
         tr.appendChild(td);
       }
@@ -302,7 +303,6 @@ function Move(y, x, directiony, directionx) {
         i3 = eP[3];
         while (i2!=0||i3!=0) {
           cell = level[i][eP[0]+i2][eP[1]+i3];
-          cell.render = true;
           if (cell.hasOwnProperty("afterMove")) {cell.afterMove(eP[0]+i2,eP[1]+i3);}
           if (i2!=0) {i2=VectorOperation(i2, -1, directiony);}
           if (i3!=0) {i3=VectorOperation(i3, -1, directionx);}
@@ -379,18 +379,16 @@ function endPointsHandlerForMovement(base, toAdd) {
 
 function Render() {
   var i1;
+  var origin = FindOrigin();
   var cells = document.getElementsByClassName("cells");
   for (i1=0; i1<cells.length; i1++) {
     var displayCell = cells[i1];
     var z = displayCell.dataset.z;
-    var y = displayCell.dataset.y;
-    var x = displayCell.dataset.x;
+    var y = Number(displayCell.dataset.y)+origin[0];
+    var x = Number(displayCell.dataset.x)+origin[1];
     if (CellExist(z,y,x)) {
       var cell = level[z][y][x];
-      if (cell.render) {
-        displayCell.src = cell.texturepath(y,x);
-        cell.render = false;
-      }
+      displayCell.src = cell.texturepath(y,x);
     }
   }
 }
@@ -406,6 +404,18 @@ function OldRender() {
   }
 }
 
+function FindOrigin () {
+  var playerPosition = SearchPositionByID(level[1], "player_1")[0];
+  var y = playerPosition[0];
+  var x = playerPosition[1];
+  var origin = [y-gameState.viewField, x-gameState.viewField];
+  if (origin[0]+gameState.displaySize() > gameState.levelMaxSize[0]) {origin[0]=gameState.levelMaxSize[0]-gameState.displaySize();}
+  if (origin[1]+gameState.displaySize() > gameState.levelMaxSize[1]) {origin[1]=gameState.levelMaxSize[1]-gameState.displaySize();}
+  if (origin[0]<0){origin[0]=0;}
+  if (origin[1]<0){origin[1]=0;}
+  return(origin);
+}
+
 function Load(input) {
   DeleteGame();
   var i1, i2, i3;
@@ -419,11 +429,15 @@ function Load(input) {
       }
     }
   }
+  FixLevel();
   //general e player
   if (Gametype != 2) {
     document.getElementById("completed").innerHTML = "";
     gameState.remainingBoxes = input[1].remainingBoxes;
+    gameState.viewField = input[1].viewField;
     gameState.gameRunning = true;
+    FindLevelMaxSize();
+    CreateTables(gameState.displaySize());
     //players setup
     var playersData = input[2];
     gameState.playerNumber = playersData.length;
@@ -447,6 +461,45 @@ function Load(input) {
     }
   }
   Render();
+}
+
+function FindLevelMaxSize () {
+  gameState.levelMaxSize[0] = level[0].length;
+  var i1;
+  for (i1=0; i1<level[0].length; i1++) {
+    if (level[0][i1].length > gameState.levelMaxSize[1]) {gameState.levelMaxSize[1]=level[0][i1].length;}
+  }
+}
+
+function FixLevel () {
+  var i1, i2;
+  //ciclo sulle colonne
+  for (i1=0; i1<level[0].length; i1++) {
+    //se manca una riga la aggiungo
+    if (level[1][i1]==undefined) {level[1].push([]);}
+    //ciclo sulle celle
+    for (i2=0; i2<level[0][i1].length; i2++) {
+      //se manca una cella la aggiungo
+      if (!CellExist(1,i1,i2)) {
+        level[1][i1].push(undefined);
+        InsertCell (1,i1,i2,0);
+      }
+    }
+  }
+  for (i1=0; i1<level[1].length; i1++) {
+    if (level[0][i1]==undefined) {
+      level[1].splice(i1,1);
+      i1--;
+    }
+    else {
+      for (i2=0; i2<level[1][i1].length; i2++) {
+        if (level[0][i1][i2]==undefined) {
+          level[1][i1].splice(i2,1);
+          i2--;
+        }
+      }
+    }
+  }
 }
 
 function isJson(str) {
@@ -555,14 +608,20 @@ function ClearDisplay () {
 }
 
 function DeleteGame () {
-  ClearDisplay();
+  DeleteTables();
   gameState = {...defaultGameState};
   level = [[],[]];
 }
 
+function DeleteTables () {
+  var tables = document.getElementsByClassName("tables");
+  while (tables.length!=0) {
+    tables[0].remove();
+  }
+}
+
 function InsertCell (z,y,x,numeralId,data) {
   level[z][y][x] = {...defaultCells[z][numeralId]};
-  level[z][y][x].render = true;
   if (level[z][y][x].hasOwnProperty("setup") && gameState.gameRunning == true) {level[z][y][x].setup(data,y,x);}
 }
 
