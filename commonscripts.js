@@ -45,7 +45,7 @@ var goal_0 = {
   id:"goal_0",
   onStepping:function(object) {
     var previousObjectsCell = level[1][object.y+((Math.abs(object.deltay)-1)*object.directiony)][object.x+((Math.abs(object.deltax)-1)*object.directionx)];
-    if (previousObjectsCell.id == "box_1" && previousObjectsCell.texture == "default") {
+    if (previousObjectsCell.id == "box_1" && previousObjectsCell.texture == "deliverable") {
       return({endPoints:[[object.y,object.x,object.deltay,object.deltax]],continua:false});
     }
     return({endPoints:null,continua:false});
@@ -119,13 +119,12 @@ var player_1 = {
   }
 };
 var box_1 = {
-  id:"box_1",justStepped:0,n:0,e:0,s:0,w:0,texture:undefined,lastChecked:0,
+  id:"box_1",justStepped:0,n:0,e:0,s:0,w:0,texture:undefined,lastChecked:0,deliverable:false,
   texturepath:function(y,x) {
     if (this.texture == undefined) {this.determineTexturepath(y,x);}
     return("../assets/textures/"+this.id+"/"+this.texture+".png");
   },
   determineTexturepath:function(y,x){
-    if (this.hasOwnProperty("fix")) {this.fix(y,x)}
     var file = "";
     var previousPresent = false;
     if (this.n==1) {
@@ -151,16 +150,29 @@ var box_1 = {
       if ((level[1][y-1][x-1].e!=1 || level[1][y-1][x-1].s!=1) && file!="") {file = file + "-";}
     }
     if (file=="") {file="default";}
+    if (this.deliverable) {file="deliverable";}
     this.texture=file;
   },
-  setup:function(data,y,x){
+  setup:function(data){
     if (data != undefined) {
       if (data[0]==1) {this.n=1;}
       if (data[1]==1) {this.e=1;}
       if (data[2]==1) {this.s=1;}
       if (data[3]==1) {this.w=1;}
+      if (data[4]==1) {this.deliverable=true;}
     }
     delete this.setup;
+  },
+  secondSetup:function(y,x){
+    y = Number(y);
+    x = Number(x);
+    if (this.n==1 && level[1][y-1][x].s!=1) {this.n=0;}
+    if (this.e==1 && level[1][y][x+1].w!=1) {this.e=0;}
+    if (this.s==1 && level[1][y+1][x].n!=1) {this.s=0;}
+    if (this.w==1 && level[1][y][x-1].e!=1) {this.w=0;}
+    if (this.n||this.e||this.s||this.w) {this.deliverable=false;}
+    this.determineTexturepath(y,x);
+    delete this.secondSetup;
   },
   onStepping:function(object){
     this.lastChecked = gameState.moveNumber;
@@ -196,20 +208,21 @@ var box_1 = {
     }
     return(result);
   },
-  fix:function (y,x) {
-    y = Number(y);
-    x = Number(x);
-    if (this.n==1 && level[1][y-1][x].s!=1) {this.n=0;}
-    if (this.e==1 && level[1][y][x+1].w!=1) {this.e=0;}
-    if (this.s==1 && level[1][y+1][x].n!=1) {this.s=0;}
-    if (this.w==1 && level[1][y][x-1].e!=1) {this.w=0;}
-    delete this.fix;
-  }
 };
 
 const defaultCells = [
-  [void_0,wall_0,path_0,goal_0,oneway_0],
-  [void_1,player_1,box_1]
+  [
+    void_0, //0
+    wall_0, //1
+    path_0, //2
+    goal_0, //3
+    oneway_0 //4
+  ],
+  [
+    void_1, //0
+    player_1, //1
+    box_1 //2
+  ]
 ];
 
 function CreateTables (size) {
@@ -218,6 +231,7 @@ function CreateTables (size) {
     var table = document.createElement("table");
     table.classList.add("display");
     table.classList.add("tables");
+    //table.border = 1;
     for (i2=0; i2<size; i2++) {
       var tr = document.createElement("tr");
       for (i3=0; i3<size; i3++) {
@@ -456,6 +470,17 @@ function Load(input) {
         var cell = level[i1][i2][i3];
         if (cell.hasOwnProperty("setup")) {
           cell.setup(input[0][i1][i2][i3][1]);
+        }
+      }
+    }
+  }
+  //secondSetup
+  for (i1=0; i1<level.length; i1++) {
+    for (i2=0; i2<level[i1].length; i2++) {
+      for (i3=0; i3<level[i1][i2].length; i3++) {
+        var cell = level[i1][i2][i3];
+        if (cell.hasOwnProperty("secondSetup")) {
+          cell.secondSetup(i2,i3);
         }
       }
     }
