@@ -7,6 +7,7 @@ var defaultGameState = {
   levelMaxSize:[0,0]
 };
 var gameState = {...defaultGameState};
+var pageType;
 
 var void_0 = {
   id:"void_0",
@@ -29,15 +30,22 @@ var wall_0 = {
   }
 };
 var path_0 = {
-  id:"path_0",
+  id:"path_0",texture_options_0:4,texture_options_1:4,
   onStepping:function(object){
     return({});
   },
   texture:undefined,
-  texturepath:function(){return("../assets/textures/"+this.id+"/"+this.texture+".png");},
+  texturepath:function(){
+    return("../assets/textures/"+this.id+"/"+this.texture+".png");
+  },
   setup:function(data){
-    if(data[0]!=undefined){this.texture=data[0];}
-    else{this.texture=0;}
+    var texture = 0;
+    if(data[0]!=undefined){texture=data[0];}
+    var textureNumber = this["texture_options_"+texture];
+    if (textureNumber > 1) {
+      texture = texture+"/"+Math.floor(Math.random()*textureNumber);
+    }
+    this.texture = texture;
     delete this.setup;
   }
 };
@@ -225,11 +233,34 @@ const defaultCells = [
   ]
 ];
 
+function PageSetup (input) {
+  pageType = input;
+  //container
+  var div = document.createElement("div");
+  div.id = "display_container";
+  document.body.append(div);
+  //main
+  div = document.createElement("div");
+  div.id = "display_main";
+  document.getElementById("display_container").append(div);
+  //side
+  div = document.createElement("div");
+  div.id = "display_side";
+  document.getElementById("display_container").append(div);
+  //botton
+  div = document.createElement("div");
+  div.id = "display_botton";
+  document.body.append(div);
+  //screen_text
+  var p = document.createElement("p");
+  p.id = "screen_text";
+  document.getElementById("display_main").append(p);
+}
+
 function CreateTables (size) {
   var i1, i2, i3;
   for (i1=0; i1<2; i1++) {
     var table = document.createElement("table");
-    table.classList.add("display");
     table.classList.add("tables");
     //table.border = 1;
     for (i2=0; i2<size; i2++) {
@@ -237,7 +268,6 @@ function CreateTables (size) {
       for (i3=0; i3<size; i3++) {
         var td = document.createElement("td");
         var img = document.createElement("img");
-
         img.classList.add("cells");
         img.src = "../assets/textures/transparent.png";
         img.width = "32";
@@ -246,13 +276,12 @@ function CreateTables (size) {
         img.dataset.y = i2;
         img.dataset.x = i3;
         img.dataset.z = i1;
-
         td.appendChild(img);
         tr.appendChild(td);
       }
       table.appendChild(tr);
     }
-    document.body.insertBefore(table, document.getElementById("completed"));
+    document.getElementById("display_main").append(table);
   }
 }
 
@@ -445,8 +474,8 @@ function Load(input) {
   }
   FixLevel();
   //general e player
-  if (Gametype != 2) {
-    document.getElementById("completed").innerHTML = "";
+  if (pageType != 2) {
+    document.getElementById("screen_text").innerHTML = "";
     gameState.remainingBoxes = input[1].remainingBoxes;
     gameState.viewField = input[1].viewField;
     gameState.gameRunning = true;
@@ -592,8 +621,8 @@ document.addEventListener('keypress', event => {
 
 function Finish() {
   gameState.gameRunning = false;
-  document.getElementById("completed").innerHTML = "Completed!!"
-  if (Gametype == 0) {
+  document.getElementById("screen_text").innerHTML = "Completed!!"
+  if (pageType == 0) {
     document.getElementById("main").innerHTML = "Next";
   }
 }

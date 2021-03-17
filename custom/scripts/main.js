@@ -1,4 +1,4 @@
-var Gametype = 1;
+var pageType = 1;
 
 function LoadThis() {
   var string = document.getElementById("start").value

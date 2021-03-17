@@ -1,20 +1,36 @@
-.display {
-  border-spacing: 0px;
-  position: absolute;
-  top: 35;
-  left: 35;
-}
-.display tr td {
-  padding: 0px;
-}
-.display_editor tr td {
-  border-style: solid;
-  border-width: thin;
-}
-#completed {
-  font-size: 100px;
-  color: purple
-}
 body {
   background-color: #CC88FF
+}
+
+#display_container {
+  display: flex;
+}
+
+#display_main {
+  display: grid;
+  border: 3px solid black;
+}
+#display_main > * {
+  grid-row: 1;
+  grid-column: 1;
+}
+#display_main * {
+  font-size: 100px;
+  color: purple;
+  padding: 0px;
+  border-spacing: 0px;
+}
+
+#display_side {
+  margin-left: 1%;
+  /*border: 3px solid green;*/
+}
+
+#display_botton {
+  /*border: 3px solid blue;*/
+}
+
+#screen_text {
+  position: absolute;
+  z-index: 100000;
 }

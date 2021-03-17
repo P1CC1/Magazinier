@@ -4,7 +4,7 @@ var type = [0,0];
 var SomethingSelected = false;
 var PlayerPresent = false;
 var BoxesNumber = 0;
-var Gametype = 2;
+var pageType = 2;
 
 function LoadThis() {
   var string = document.getElementById("start").value
