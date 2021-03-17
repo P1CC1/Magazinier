@@ -30,7 +30,7 @@ var wall_0 = {
   }
 };
 var path_0 = {
-  id:"path_0",texture_options_0:4,texture_options_1:4,
+  id:"path_0",texture_options_0:4,texture_options_1:4,texture_options_2:4,
   onStepping:function(object){
     return({});
   },
